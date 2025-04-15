@@ -1,11 +1,10 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
   <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Welcome to Firebase Hosting</title>
 
-    <!-- Firebase SDK -->
     <script defer src="/__/firebase/11.6.0/firebase-app-compat.js"></script>
     <script defer src="/__/firebase/11.6.0/firebase-auth-compat.js"></script>
     <script defer src="/__/firebase/11.6.0/firebase-database-compat.js"></script>
@@ -18,19 +17,68 @@
     <script defer src="/__/firebase/11.6.0/firebase-performance-compat.js"></script>
     <script defer src="/__/firebase/init.js?useEmulator=true"></script>
 
-    <style media="screen">
-      body { background: #ECEFF1; color: rgba(0,0,0,0.87); font-family: Roboto, Helvetica, Arial, sans-serif; margin: 0; padding: 0; }
-      #message { background: white; max-width: 360px; margin: 100px auto 16px; padding: 32px 24px; border-radius: 3px; }
-      #message h2 { color: #ffa100; font-weight: bold; font-size: 16px; margin: 0 0 8px; }
-      #message h1 { font-size: 22px; font-weight: 300; color: rgba(0,0,0,0.6); margin: 0 0 16px;}
-      #message p { line-height: 140%; margin: 16px 0 24px; font-size: 14px; }
-      #message a { display: block; text-align: center; background: #039be5; text-transform: uppercase; text-decoration: none; color: white; padding: 16px; border-radius: 4px; }
-      #message, #message a { box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24); }
-      #load { color: rgba(0,0,0,0.4); text-align: center; font-size: 13px; } html { scroll-behavior: smooth;}
-
+    <style>
+      body {
+        background: #ECEFF1;
+        color: rgba(0,0,0,0.87);
+        font-family: Roboto, Helvetica, Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+      }
+      #message {
+        background: white;
+        max-width: 360px;
+        margin: 100px auto 16px;
+        padding: 32px 24px;
+        border-radius: 3px;
+      }
+      #message h2 {
+        color: #ffa100;
+        font-weight: bold;
+        font-size: 16px;
+        margin: 0 0 8px;
+      }
+      #message h1 {
+        font-size: 22px;
+        font-weight: 300;
+        color: rgba(0,0,0,0.6);
+        margin: 0 0 16px;
+      }
+      #message p {
+        line-height: 140%;
+        margin: 16px 0 24px;
+        font-size: 14px;
+      }
+      #message a {
+        display: block;
+        text-align: center;
+        background: #039be5;
+        text-transform: uppercase;
+        text-decoration: none;
+        color: white;
+        padding: 16px;
+        border-radius: 4px;
+      }
+      #message, #message a {
+        box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+      }
+      #load {
+        color: rgba(0,0,0,0.4);
+        text-align: center;
+        font-size: 13px;
+      }
+      html {
+        scroll-behavior: smooth;
+      }
       @media (max-width: 600px) {
-        body, #message { margin-top: 0; background: white; box-shadow: none; }
-        body { border-top: 16px solid #ffa100; }
+        body, #message {
+          margin-top: 0;
+          background: white;
+          box-shadow: none;
+        }
+        body {
+          border-top: 16px solid #ffa100;
+        }
       }
     </style>
   </head>
@@ -40,7 +88,7 @@
       <a href="#projects" style="margin: 0 16px; color: white; text-decoration: none; font-weight: bold;">Projects</a>
       <a href="#about-me" style="margin: 0 16px; color: white; text-decoration: none; font-weight: bold;">About Me</a>
     </nav>
-    
+
     <div id="message">
       <h2>Welcome to</h2>
       <h1>Alexiya's portfolio</h1>
@@ -76,58 +124,20 @@
       </p>        
       <canvas id="tetris" width="240" height="400" style="border:1px solid #ccc; background:#fff;"></canvas>
       <p id="score" style="font-size: 16px; text-align:center; margin-top:10px;">Score: 0</p>
-      <div id="bio-paragraph" style="display:none; margin-top: 20px; background:#f0f0f0; padding:15px; border-radius:5px; text-align:left;"></div>
+      <button id="resume-game" style="display:none; margin-top: 20px;" onclick="resumeGame()">Next</button>
     </div>
 
     <script>
-      document.addEventListener('DOMContentLoaded', function() {
-        const loadEl = document.querySelector('#load');
-        try {
-          let app = firebase.app();
-          let features = [
-            'auth', 
-            'database', 
-            'firestore',
-            'functions',
-            'messaging', 
-            'storage', 
-            'analytics', 
-            'remoteConfig',
-            'performance',
-          ].filter(feature => typeof app[feature] === 'function');
-          loadEl.textContent = `Firebase SDK loaded with ${features.join(', ')}`;
-        } catch (e) {
-          loadEl.textContent = `Error loading Firebase SDK: ${e.message}`;
-        }
-      });
-
-      function showBioParagraph() {
-        document.getElementById('bio-full').style.display = 'block';
-      }
-
-      function startTetris() {
-        document.getElementById('about-me').style.display = 'none';
-        document.getElementById('tetris-container').style.display = 'block';
-        playerReset();
-        updateScore();
-        update();
-      }
-
-      const canvas = document.getElementById('tetris');
-      const context = canvas.getContext('2d');
-      const scale = 20;
-      const rows = 20;
-      const cols = 10;
-      let arena = createMatrix(cols, rows);
+      let gamePaused = false;
+      let lastTime = 0;
+      let dropCounter = 0;
+      let dropInterval = 1000;
+      let arena = createMatrix(10, 20);
       let player = {
         pos: { x: 0, y: 0 },
         matrix: createPiece(),
         score: 0
       };
-      let lastTime = 0;
-      let dropCounter = 0;
-      let dropInterval = 1000;
-      let gamePaused = false;
 
       function createMatrix(w, h) {
         const matrix = [];
@@ -195,10 +205,13 @@
         }
         draw();
         lastTime = now;
-        requestAnimationFrame(update);
+        if (!gamePaused) requestAnimationFrame(update);
       }
 
       function draw() {
+        const canvas = document.getElementById('tetris');
+        const context = canvas.getContext('2d');
+        const scale = 20;
         context.fillStyle = "#eee";
         context.fillRect(0, 0, canvas.width, canvas.height);
         drawMatrix(arena, {x: 0, y: 0});
@@ -206,6 +219,9 @@
       }
 
       function drawMatrix(matrix, offset) {
+        const canvas = document.getElementById('tetris');
+        const context = canvas.getContext('2d');
+        const scale = 20;
         matrix.forEach((row, y) => {
           row.forEach((cell, x) => {
             if (cell !== 0) {
@@ -221,6 +237,8 @@
       }
 
       document.addEventListener('keydown', (event) => {
+        if (gamePaused) return;
+
         if (event.key === 'ArrowLeft') {
           player.pos.x--;
           if (collide(arena, player)) player.pos.x++;
@@ -237,18 +255,41 @@
           player.matrix = rotate(player.matrix, true);
           if (collide(arena, player)) player.matrix = rotate(player.matrix, false);
         } else if (event.key === ' ') {
-          player.pos.y++;
-          if (collide(arena, player)) {
-            player.pos.y--;
-            merge(arena, player);
-            playerReset();
-            updateScore();
+          while (!collide(arena, player)) {
+            player.pos.y++;
           }
+          player.pos.y--;
+          merge(arena, player);
+          playerReset();
+          updateScore();
         }
       });
 
       function rotate(matrix, clockWise = false) {
-        return matrix.map((_, index) => matrix.map(row => row[index])).reverse();
+        return matrix[0].map((_, index) => matrix.map(row => row[index])).reverse();
+      }
+
+      function startTetris() {
+        document.getElementById('about-me').style.display = 'none';
+        document.getElementById('tetris-container').style.display = 'block';
+        playerReset();
+        updateScore();
+        update();
+      }
+
+      function pauseGame() {
+        gamePaused = true;
+        document.getElementById('resume-game').style.display = 'block';
+      }
+
+      function resumeGame() {
+        gamePaused = false;
+        document.getElementById('resume-game').style.display = 'none';
+        update();
+      }
+
+      function showBioParagraph() {
+        document.getElementById('bio-full').style.display = 'block';
       }
     </script>
   </body>
