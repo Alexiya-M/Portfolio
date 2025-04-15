@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Welcome to Firebase Hosting</title>
+    <title>Alexiya's Portfolio</title>
     <style>
       body {
         background: #ECEFF1;
@@ -67,6 +67,11 @@
           border-top: 16px solid #ffa100;
         }
       }
+
+      #tetris-container {
+        display: none;
+        margin-top: 20px;
+      }
     </style>
   </head>
   <body>
@@ -75,7 +80,7 @@
       <a href="#projects" style="margin: 0 16px; color: white; text-decoration: none; font-weight: bold;">Projects</a>
       <a href="#about-me" style="margin: 0 16px; color: white; text-decoration: none; font-weight: bold;">About Me</a>
     </nav>
-
+    
     <div id="message">
       <h2>Welcome to</h2>
       <h1>Alexiya's portfolio</h1>
@@ -95,37 +100,51 @@
       </ul>
     </div>
 
-    <div id="about-me" style="max-width: 600px; margin: 40px auto; padding: 24px; background: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); text-align: center;">
+    <div id="about-me" style="max-width: 600px; margin: 40px auto; padding: 24px; background: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
       <h2 style="color: #039be5;">About Me</h2>
-      <p>Would you like to read about me or play a game to reveal the information?</p>
-      <button onclick="showBioParagraph()">Read About Me</button>
-      <button onclick="startTetris()">Play Game</button>
-      <p id="bio-full" style="display:none; margin-top:20px; font-size: 14px; text-align: left;">
-        Hello, my name is Alexiya. I go by She/Her pronouns. I enjoy learning, games, and problem solving. I am currently in school to be a programmer. My plans for after learning to program is to get into the cybersecurity field. Outside of tech, I also enjoy playing board games, playing video games, and fun competitions.
+      <p style="font-size: 14px; color: rgba(0,0,0,0.6);">
+        I am a student learning programming and interested in cybersecurity. You can either read more about me or play a game.
+      </p>
+      <button onclick="showBio()">Read About Me</button>
+      <button onclick="startTetris()">Play a Game</button>
+      <p id="bio-text" style="display:none;">
+        <span>Hello, my name is Alexiya.</span>
+        <span>I go by She/Her pronouns.</span>
+        <span>I enjoy learning, games, and problem solving.</span>
+        <span>I am currently in school to be a programmer.</span>
+        <span>My plans for after learning to program is to get into the cybersecurity field.</span>
+        <span>Outside of tech, I also enjoy playing board games, playing video games, and fun competitions.</span>
       </p>
     </div>
 
-    <div id="tetris-container" style="display:none; margin-top: 20px;">
-      <p id="tetris-instructions" style="font-size: 14px; margin-top: 10px; color: #555;">
-        Controls: <strong>Z</strong> and <strong>X</strong> to rotate, <strong>Left Arrow key</strong> and <strong>Right Arrow key</strong> to move, <strong>Space</strong> to drop instantly.
-      </p>        
+    <div id="tetris-container">
       <canvas id="tetris" width="240" height="400" style="border:1px solid #ccc; background:#fff;"></canvas>
-      <p id="score" style="font-size: 16px; text-align:center; margin-top:10px;">Score: 0</p>
-      <button id="resume-game" style="display:none; margin-top: 20px;" onclick="resumeGame()">Next</button>
+      <div id="bio-paragraph" style="display:none; margin-top: 20px; background:#f0f0f0; padding:15px; border-radius:5px; text-align:left;"></div>
     </div>
-
+    
     <script>
-      let gamePaused = false;
-      let lastTime = 0;
+      document.addEventListener('DOMContentLoaded', function() {
+        const loadEl = document.querySelector('#load');
+      });
+
+      function showBio() {
+        document.getElementById('bio-text').style.display = 'block';
+        document.getElementById('tetris-container').style.display = 'none';
+      }
+
+      function startTetris() {
+        document.getElementById('bio-text').style.display = 'none';
+        document.getElementById('tetris-container').style.display = 'block';
+        initializeGame();
+      }
+
+      let canvas = document.getElementById('tetris');
+      let context = canvas.getContext('2d');
+      let arena = createMatrix(12, 20);
+      let player = { pos: { x: 0, y: 0 }, matrix: createPiece(), score: 0 };
       let dropCounter = 0;
       let dropInterval = 1000;
-      let linesCleared = 0;
-      let arena = createMatrix(10, 20);
-      let player = {
-        pos: { x: 0, y: 0 },
-        matrix: createPiece(),
-        score: 0
-      };
+      let lastTime = 0;
 
       function createMatrix(w, h) {
         const matrix = [];
@@ -147,11 +166,14 @@
       }
 
       function playerReset() {
+        const pieces = 'ILJOTSZ';
         player.matrix = createPiece();
         player.pos.y = 0;
         player.pos.x = Math.floor(arena[0].length / 2) - Math.floor(player.matrix[0].length / 2);
         if (collide(arena, player)) {
-          return;
+          arena.forEach(row => row.fill(0));
+          player.score = 0;
+          updateScore();
         }
       }
 
@@ -168,150 +190,61 @@
       }
 
       function merge(arena, player) {
-        player.matrix.forEach((row, y) => {
-          row.forEach((value, x) => {
-            if (value !== 0) {
-              arena[y + player.pos.y][x + player.pos.x] = value;
-            }
+        player.matrix.forEach((r, y) => {
+          r.forEach((v, x) => {
+            if (v !== 0) arena[y + player.pos.y][x + player.pos.x] = v;
           });
         });
       }
 
       function rotate(matrix) {
-        const rotated = matrix[0].map((_, index) => matrix.map(row => row[index])).reverse();
-        if (collide(arena, { pos: player.pos, matrix: rotated })) {
-          return matrix; // If rotated piece collides, return original matrix
-        }
-        return rotated;
+        return matrix[0].map((_, i) => matrix.map(row => row[i])).reverse();
       }
 
-      function move(dir) {
-        player.pos.x += dir;
-        if (collide(arena, player)) {
-          player.pos.x -= dir;
-        }
+      function draw() {
+        context.fillStyle = '#000';
+        context.fillRect(0, 0, canvas.width, canvas.height);
+        drawMatrix(arena, { x: 0, y: 0 });
+        drawMatrix(player.matrix, player.pos);
       }
 
-      function drop() {
-        player.pos.y++;
-        if (collide(arena, player)) {
-          player.pos.y--;
-          merge(arena, player);
-          playerReset();
-          linesCleared = 0;
-          player.score = 0;
-          updateScore();
-        }
-        dropCounter = 0;
-      }
-
-      function hardDrop() {
-        while (!collide(arena, player)) {
-          player.pos.y++;
-        }
-        player.pos.y--;
-        merge(arena, player);
-        playerReset();
-        linesCleared = 0;
-        player.score = 0;
-        updateScore();
+      function drawMatrix(matrix, offset) {
+        matrix.forEach((r, y) => {
+          r.forEach((v, x) => {
+            if (v !== 0) {
+              context.fillStyle = 'red';
+              context.fillRect(x + offset.x, y + offset.y, 1, 1);
+            }
+          });
+        });
       }
 
       function updateScore() {
-        const scoreElement = document.getElementById('score');
-        scoreElement.innerText = `Score: ${player.score}`;
-      }
-
-      function removeFullLines() {
-        outer: for (let y = arena.length - 1; y >= 0; --y) {
-          if (arena[y].every(cell => cell !== 0)) {
-            arena.splice(y, 1);
-            arena.unshift(new Array(arena[0].length).fill(0));
-            linesCleared++;
-            if (linesCleared === 1) {
-              player.score += 10;
-            } else if (linesCleared === 2) {
-              player.score += 50;
-            } else if (linesCleared === 3) {
-              player.score += 150;
-            } else if (linesCleared === 4) {
-              player.score += 500;
-            }
-            linesCleared = 0;
-            updateScore();
-            break;
-          }
-        }
+        document.getElementById('score').textContent = player.score;
       }
 
       function update(time = 0) {
         const deltaTime = time - lastTime;
         lastTime = time;
         dropCounter += deltaTime;
-        if (dropCounter > dropInterval && !gamePaused) {
-          drop();
+        if (dropCounter > dropInterval) {
+          player.pos.y++;
+          dropCounter = 0;
+          if (collide(arena, player)) {
+            player.pos.y--;
+            merge(arena, player);
+            playerReset();
+            updateScore();
+          }
         }
-        removeFullLines();
         draw();
         requestAnimationFrame(update);
       }
 
-      function draw() {
-        const canvas = document.getElementById('tetris');
-        const ctx = canvas.getContext('2d');
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.fillStyle = '#000';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        drawMatrix(arena, { x: 0, y: 0 }, ctx);
-        drawMatrix(player.matrix, player.pos, ctx);
-      }
-
-      function drawMatrix(matrix, offset, ctx) {
-        matrix.forEach((row, y) => {
-          row.forEach((value, x) => {
-            if (value !== 0) {
-              ctx.fillStyle = 'red';
-              ctx.fillRect(x * 24 + offset.x, y * 24 + offset.y, 24, 24);
-            }
-          });
-        });
-      }
-
-      function startTetris() {
-        document.getElementById('tetris-container').style.display = 'block';
-        document.getElementById('about-me').style.display = 'none';
+      function initializeGame() {
         playerReset();
-        gamePaused = false;
         update();
       }
-
-      function resumeGame() {
-        gamePaused = false;
-        document.getElementById('resume-game').style.display = 'none';
-        update();
-      }
-
-      function showBioParagraph() {
-        document.getElementById('bio-full').style.display = 'block';
-        document.getElementById('about-me').style.display = 'none';
-      }
-
-      document.addEventListener('keydown', (event) => {
-        if (gamePaused) return;
-        if (event.key === 'ArrowLeft') {
-          move(-1);
-        } else if (event.key === 'ArrowRight') {
-          move(1);
-        } else if (event.key === 'ArrowDown') {
-          drop();
-        } else if (event.key === ' ') {
-          hardDrop();
-        } else if (event.key === 'z') {
-          player.matrix = rotate(player.matrix);
-        } else if (event.key === 'x') {
-          player.matrix = rotate(player.matrix);
-        }
-      });
     </script>
   </body>
 </html>
