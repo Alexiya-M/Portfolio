@@ -8,12 +8,12 @@ import { getAnalytics } from "firebase/analytics";
 // For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
   apiKey: env.apiKey,
-  authDomain: env.authDomain,
-  projectId: env.projectId,
-  storageBucket: env.storageBucket,
-  messagingSenderId: env.messagingSenderId,
-  appId: env.appId,
-  measurementId: env.measurementId
+  authDomain: "my-portfolio-dc499.firebaseapp.com",
+  projectId: "my-portfolio-dc499",
+  storageBucket: "my-portfolio-dc499.appspot.com",
+  messagingSenderId: "636331673237",
+  appId: "1:636331673237:web:394f40eb3688f343757d9c",
+  measurementId: "G-V4M8Z2LXV6"
 };
 
 // Initialize Firebase
