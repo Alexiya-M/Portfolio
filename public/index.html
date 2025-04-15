@@ -64,26 +64,26 @@
       </ul>
     </div>
 
-    <div id="about-me" style="max-width: 600px; margin: 40px auto; padding: 24px; background: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); text-align: center; ">
-      <h2 style="color: #039be5;">About Me</h2>
-      <p>Would you like to simply read about me or play a game to learn about me?</p>
-      <button onclick="showBio()" style="margin: 10px; padding: 10px 20px;">Read About Me</button>
-      <button onclick="startTetris()" style="margin: 10px; padding: 10px 20px;">Play the Game</button>
-      <div id="bio-text" style="display:none; margin-top: 20px; display:none; margin-top: 20px; ">
-        <p>Hello, my name is a Alexiya.</p>
-        <p> I go by She/Her pronouns. </p>
-        <p>I enjoy learning, games, and problem solving.</p>
-        <p>I am currently in school to be a programmer.</p>
-        <p>My plans for after learning to program is to get into the cybersecurity field</p>
-        <p>Outside of tech, I also enjoy playing board games, playing video games, and fun competetions</p>
-      </div>
-
-      <div id="tetris-container" style="display:none; margin-top: 20px;">
-        <canvas id="tetris" width="240" height="400" style="border:1px solid #ccc; background:#fff;"></canvas>
-        <div id="bio-paragraph" style="display:none; margin-top: 20px; background:#f0f0f0; padding:15px; border-radius:5px; text-align:left;"></div>
-      </div>
+    <div id="about-me">
+      <button onclick="startTetris()">Play Tetris</button>
+      <p id="bio-text" style="display:none;">
+        <span>Hello, my name is Alexiya.</span>
+        <span>I go by She/Her pronouns.</span>
+        <span>I enjoy learning, games, and problem solving.</span>
+        <span>I am currently in school to be a programmer.</span>
+        <span>My plans for after learning to program is to get into the cybersecurity field.</span>
+        <span>Outside of tech, I also enjoy playing board games, playing video games, and fun competitions.</span>
+      </p>
+    </div>
       
-    
+    <div id="tetris-container" style="display:none; margin-top: 20px;">
+      <p id="tetris-instructions" style="font-size: 14px; margin-top: 10px; color: #555;">
+        Controls: <strong>Z</strong> and <strong>X</strong> to rotate, <strong>Left Arrow key</strong>and<strong>Right Arrow key</strong> to move, <strong>Space</strong> to drop instantly.
+      </p>        
+      <canvas id="tetris" width="240" height="400" style="border:1px solid #ccc; background:#fff;"></canvas>
+      <p id="score" style="font-size: 16px; text-align:center; margin-top:10px;">Score: 0</p>
+      <div id="bio-paragraph" style="display:none; margin-top: 20px; background:#f0f0f0; padding:15px; border-radius:5px; text-align:left;"></div>
+    </div>
 
     <script>
       document.addEventListener('DOMContentLoaded', function() {
@@ -124,66 +124,134 @@
       });
     </script>
     <script>
-let bioParagraphs = [];
-let currentBioIndex = 0;
-let allShown = false;
+      const bioParagraphs = document.querySelectorAll('#bio-text span');
+      let currentBioIndex = 0;
 
-function loadBioParagraphs() {
-  const bioEl = document.querySelector('#bio-text');
-  const pTags = bioEl.querySelectorAll('p');
-  bioParagraphs = Array.from(pTags).map(p => p.textContent.trim());
-  currentBioIndex = 0;
-  allShown = false;
-}
+      const canvas = document.getElementById('tetris');
+      const context = canvas.getContext('2d');
+      context.scale(20, 20);
+      const arena = createMatrix(12, 20);
+      const player = { pos: { x: 0, y: 0 }, matrix: createPiece(), score: 0 };
+      let dropCounter = 0;
+      let dropInterval = 1000;
+      let lastTime = 0;
+      let gamePaused = false;
 
-function showBio() {
-  const bioText = document.getElementById("bio-text");
-  bioText.classList.add("read-mode");
-  bioText.style.display = "block";
-  document.getElementById("tetris-container").style.display = "none";
-}
+      function startTetris() {
+        document.getElementById('about-me').style.display = 'none';
+        document.getElementById('tetris-container').style.display = 'block';
+        playerReset();
+        updateScore();
+        update();
+      }
 
-function showNextBio() {
-  const box = document.getElementById('bio-paragraph');
-  if (currentBioIndex < bioParagraphs.length) {
-    box.textContent = bioParagraphs[currentBioIndex++];
-  } else {
-    box.textContent = "That's all about me, you may continue to play the game if you'd like 😊";
-    allShown = true;
-  }
-  box.style.display = 'block';
-  setTimeout(() => {
-    box.style.display = 'none';
-    gamePaused = false;
-  }, 3500);
-}
+      function createMatrix(w, h) {
+        const matrix = [];
+        while (h--) matrix.push(new Array(w).fill(0));
+        return matrix;
+      }
 
-    
-function startTetris() {
-  const bioText = document.getElementById("bio-text");
-  bioText.classList.remove("read-mode");
-  bioText.style.display = "none";
+      function createPiece() {
+        const pieces = [
+          [[1, 1, 1], [0, 1, 0]],
+          [[1, 1], [1, 1]],
+          [[1, 1, 0], [0, 1, 1]],
+          [[0, 1, 1], [1, 1, 0]],
+          [[1, 1, 1, 1]],
+          [[1, 1, 1], [1]],
+          [[1, 1, 1], [0, 0, 1]]
+        ];
+        return pieces[Math.floor(Math.random() * pieces.length)];
+      }
 
-  document.getElementById("tetris-container").style.display = "block";
-  loadBioParagraphs();
-  playerReset();
-  updateScore();
-  update();
-}
+      function playerReset() {
+        const pieces = 'ILJOTSZ';
+        player.matrix = createPiece();
+        player.pos.y = 0;
+        player.pos.x = Math.floor(arena[0].length / 2) - Math.floor(player.matrix[0].length / 2);
+        if (collide(arena, player)) {
+          arena.forEach(row => row.fill(0));
+          player.score = 0;
+          updateScore();
+        }
+      }
 
+      function collide(arena, player) {
+        const [m, o] = [player.matrix, player.pos];
+        for (let y = 0; y < m.length; ++y) {
+          for (let x = 0; x < m[y].length; ++x) {
+            if (m[y][x] !== 0 && (arena[y + o.y] && arena[y + o.y][x + o.x]) !== 0) {
+              return true;
+            }
+          }
+        }
+        return false;
+      }
 
-    
-      function showNextFact() {
-        if (currentFactIndex < facts.length) {
-          document.getElementById("fact-box").textContent = facts[currentFactIndex++];
-          document.getElementById("fact-box").style.display = "block";
-          setTimeout(() => {
-            document.getElementById("fact-box").style.display = "none";
-            gamePaused = false;
-          }, 3000);
+      function merge(arena, player) {
+        player.matrix.forEach((r, y) => {
+          r.forEach((v, x) => {
+            if (v !== 0) arena[y + player.pos.y][x + player.pos.x] = v;
+          });
+        });
+      }
+
+      function rotate(matrix) {
+        return matrix[0].map((_, i) => matrix.map(row => row[i])).reverse();
+      }
+
+      function draw() {
+        context.fillStyle = '#000';
+        context.fillRect(0, 0, canvas.width, canvas.height);
+        drawMatrix(arena, { x: 0, y: 0 });
+        drawMatrix(player.matrix, player.pos);
+      }
+
+      function drawMatrix(matrix, offset) {
+        matrix.forEach((r, y) => {
+          r.forEach((v, x) => {
+            if (v !== 0) {
+              context.fillStyle = 'red';
+              context.fillRect(x + offset.x, y + offset.y, 1, 1);
+            }
+          });
+        });
+      }
+
+      function updateScore() {
+        document.getElementById('score').textContent = `Score: ${player.score}`;
+      }
+
+      function update(time = 0) {
+        const deltaTime = time - lastTime;
+        lastTime = time;
+        dropCounter += deltaTime;
+        if (dropCounter > dropInterval) {
+          player.pos.y++;
+          dropCounter = 0;
+          if (collide(arena, player)) {
+            player.pos.y--;
+            merge(arena, player);
+            playerReset();
+            updateScore();
+            showNextBio();
+          }
+        }
+        draw();
+        if (!gamePaused) {
+          requestAnimationFrame(update);
+        }
+      }
+
+      function showNextBio() {
+        if (currentBioIndex < bioParagraphs.length) {
+          document.getElementById('bio-paragraph').textContent = bioParagraphs[currentBioIndex].textContent;
+          document.getElementById('bio-paragraph').style.display = 'block';
+          currentBioIndex++;
+        } else {
+          document.getElementById('bio-paragraph').textContent = "That's all about me!";
         }
       }
     </script>
-    
   </body>
 </html>
