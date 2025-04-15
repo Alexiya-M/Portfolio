@@ -64,12 +64,12 @@
       </ul>
     </div>
 
-    <div id="about-me" style="max-width: 600px; margin: 40px auto; padding: 24px; background: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); text-align: center;">
+    <div id="about-me" style="max-width: 600px; margin: 40px auto; padding: 24px; background: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); text-align: center; ">
       <h2 style="color: #039be5;">About Me</h2>
       <p>Would you like to simply read about me or play a game to learn about me?</p>
       <button onclick="showBio()" style="margin: 10px; padding: 10px 20px;">Read About Me</button>
       <button onclick="startTetris()" style="margin: 10px; padding: 10px 20px;">Play the Game</button>
-      <div id="bio-text" style="display:none; margin-top: 20px;">
+      <div id="bio-text" style="display:none; margin-top: 20px; display:none; margin-top: 20px; ">
         <p>Hello, my name is a Alexiya.</p>
         <p> I go by She/Her pronouns. </p>
         <p>I enjoy learning, games, and problem solving.</p>
@@ -136,6 +136,13 @@ function loadBioParagraphs() {
   allShown = false;
 }
 
+function showBio() {
+  const bioText = document.getElementById("bio-text");
+  bioText.classList.add("read-mode");
+  bioText.style.display = "block";
+  document.getElementById("tetris-container").style.display = "none";
+}
+
 function showNextBio() {
   const box = document.getElementById('bio-paragraph');
   if (currentBioIndex < bioParagraphs.length) {
@@ -153,12 +160,17 @@ function showNextBio() {
 
     
 function startTetris() {
-  document.getElementById("bio-text").style.display = "none";
+  const bioText = document.getElementById("bio-text");
+  bioText.classList.remove("read-mode");
+  bioText.style.display = "none";
+
   document.getElementById("tetris-container").style.display = "block";
-  loadBioParagraphs(); 
+  loadBioParagraphs();
+  playerReset();
   updateScore();
   update();
 }
+
 
     
       function showNextFact() {
