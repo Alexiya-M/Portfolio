@@ -3,20 +3,7 @@
   <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Alexiya's Portfolio</title>
-
-    <script defer src="/__/firebase/11.6.0/firebase-app-compat.js"></script>
-    <script defer src="/__/firebase/11.6.0/firebase-auth-compat.js"></script>
-    <script defer src="/__/firebase/11.6.0/firebase-database-compat.js"></script>
-    <script defer src="/__/firebase/11.6.0/firebase-firestore-compat.js"></script>
-    <script defer src="/__/firebase/11.6.0/firebase-functions-compat.js"></script>
-    <script defer src="/__/firebase/11.6.0/firebase-messaging-compat.js"></script>
-    <script defer src="/__/firebase/11.6.0/firebase-storage-compat.js"></script>
-    <script defer src="/__/firebase/11.6.0/firebase-analytics-compat.js"></script>
-    <script defer src="/__/firebase/11.6.0/firebase-remote-config-compat.js"></script>
-    <script defer src="/__/firebase/11.6.0/firebase-performance-compat.js"></script>
-    <script defer src="/__/firebase/init.js?useEmulator=true"></script>
-
+    <title>Welcome to Firebase Hosting</title>
     <style>
       body {
         background: #ECEFF1;
@@ -191,7 +178,11 @@
       }
 
       function rotate(matrix) {
-        return matrix[0].map((_, index) => matrix.map(row => row[index])).reverse();
+        const rotated = matrix[0].map((_, index) => matrix.map(row => row[index])).reverse();
+        if (collide(arena, { pos: player.pos, matrix: rotated })) {
+          return matrix; // If rotated piece collides, return original matrix
+        }
+        return rotated;
       }
 
       function move(dir) {
@@ -212,6 +203,18 @@
           updateScore();
         }
         dropCounter = 0;
+      }
+
+      function hardDrop() {
+        while (!collide(arena, player)) {
+          player.pos.y++;
+        }
+        player.pos.y--;
+        merge(arena, player);
+        playerReset();
+        linesCleared = 0;
+        player.score = 0;
+        updateScore();
       }
 
       function updateScore() {
@@ -302,17 +305,11 @@
         } else if (event.key === 'ArrowDown') {
           drop();
         } else if (event.key === ' ') {
-          drop();
+          hardDrop();
         } else if (event.key === 'z') {
           player.matrix = rotate(player.matrix);
-          if (collide(arena, player)) {
-            player.matrix = rotate(player.matrix, -1);
-          }
         } else if (event.key === 'x') {
           player.matrix = rotate(player.matrix);
-          if (collide(arena, player)) {
-            player.matrix = rotate(player.matrix, -1);
-          }
         }
       });
     </script>
