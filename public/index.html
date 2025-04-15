@@ -58,11 +58,29 @@
             🏀 Topside Tipoff
           </a>
           <p style="margin: 4px 0 0; font-size: 14px; color: rgba(0,0,0,0.6);">
-            A basketball insights website offering predictions and analytics.
+            Worked with a team to make this website from scratch.
           </p>
         </li>
       </ul>
     </div>
+
+    <div id="about-me" style="max-width: 600px; margin: 40px auto; padding: 24px; background: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); text-align: center;">
+      <h2 style="color: #039be5;">About Me</h2>
+      <p>Would you like to simply read about me or play a game to learn about me?</p>
+      <button onclick="showBio()" style="margin: 10px; padding: 10px 20px;">Read About Me</button>
+      <button onclick="startTetris()" style="margin: 10px; padding: 10px 20px;">Play the Game</button>
+      <div id="bio-text" style="display:none; margin-top: 20px;">
+        <p>Hello, my name is a Alexiya. I go by She/Her. </p>
+        <p>I enjoy learning, and currently in school to be a programmer.</p>
+        <p>My plans for after learning to program is to get into the cybersecurity field</p>
+        <p>Outside of tech, I also enjoy playing board games, playing video games, and fun competetions</p>
+      </div>
+
+      <div id="tetris-container" style="display:none; margin-top: 20px;">
+        <canvas id="tetris" width="240" height="400" style="border:1px solid #ccc; background:#fff;"></canvas>
+        <div id="bio-paragraph" style="display:none; margin-top: 20px; background:#f0f0f0; padding:15px; border-radius:5px; text-align:left;"></div>
+      </div>
+      
     
 
     <script>
@@ -103,5 +121,55 @@
         }
       });
     </script>
+    <script>
+let bioParagraphs = [];
+let currentBioIndex = 0;
+let allShown = false;
+
+function loadBioParagraphs() {
+  const bioEl = document.querySelector('#bio-text');
+  const pTags = bioEl.querySelectorAll('p');
+  bioParagraphs = Array.from(pTags).map(p => p.textContent.trim());
+  currentBioIndex = 0;
+  allShown = false;
+}
+
+function showNextBio() {
+  const box = document.getElementById('bio-paragraph');
+  if (currentBioIndex < bioParagraphs.length) {
+    box.textContent = bioParagraphs[currentBioIndex++];
+  } else {
+    box.textContent = "That's all about me, you may continue to play the game if you'd like 😊";
+    allShown = true;
+  }
+  box.style.display = 'block';
+  setTimeout(() => {
+    box.style.display = 'none';
+    gamePaused = false;
+  }, 3500);
+}
+
+    
+function startTetris() {
+  document.getElementById("bio-text").style.display = "none";
+  document.getElementById("tetris-container").style.display = "block";
+  loadBioParagraphs(); 
+  updateScore();
+  update();
+}
+
+    
+      function showNextFact() {
+        if (currentFactIndex < facts.length) {
+          document.getElementById("fact-box").textContent = facts[currentFactIndex++];
+          document.getElementById("fact-box").style.display = "block";
+          setTimeout(() => {
+            document.getElementById("fact-box").style.display = "none";
+            gamePaused = false;
+          }, 3000);
+        }
+      }
+    </script>
+    
   </body>
 </html>
