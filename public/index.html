@@ -132,6 +132,7 @@
       let lastTime = 0;
       let dropCounter = 0;
       let dropInterval = 1000;
+      let linesCleared = 0;
       let arena = createMatrix(10, 20);
       let player = {
         pos: { x: 0, y: 0 },
@@ -159,6 +160,7 @@
       }
 
       function playerReset() {
+        const pieces = 'ILJOTSZ';
         player.matrix = createPiece();
         player.pos.y = 0;
         player.pos.x = Math.floor(arena[0].length / 2) - Math.floor(player.matrix[0].length / 2);
@@ -182,104 +184,103 @@
       }
 
       function merge(arena, player) {
-        player.matrix.forEach((r, y) => {
-          r.forEach((v, x) => {
-            if (v !== 0) arena[y + player.pos.y][x + player.pos.x] = v;
-          });
-        });
-      }
-
-      function update() {
-        const now = Date.now();
-        const delta = now - lastTime;
-        dropCounter += delta;
-        if (dropCounter > dropInterval) {
-          player.pos.y++;
-          if (collide(arena, player)) {
-            player.pos.y--;
-            merge(arena, player);
-            playerReset();
-            updateScore();
-          }
-          dropCounter = 0;
-        }
-        draw();
-        lastTime = now;
-        if (!gamePaused) requestAnimationFrame(update);
-      }
-
-      function draw() {
-        const canvas = document.getElementById('tetris');
-        const context = canvas.getContext('2d');
-        const scale = 20;
-        context.fillStyle = "#eee";
-        context.fillRect(0, 0, canvas.width, canvas.height);
-        drawMatrix(arena, {x: 0, y: 0});
-        drawMatrix(player.matrix, player.pos);
-      }
-
-      function drawMatrix(matrix, offset) {
-        const canvas = document.getElementById('tetris');
-        const context = canvas.getContext('2d');
-        const scale = 20;
-        matrix.forEach((row, y) => {
-          row.forEach((cell, x) => {
-            if (cell !== 0) {
-              context.fillStyle = 'blue';
-              context.fillRect(x * scale + offset.x * scale, y * scale + offset.y * scale, scale, scale);
+        player.matrix.forEach((row, y) => {
+          row.forEach((value, x) => {
+            if (value !== 0) {
+              arena[y + player.pos.y][x + player.pos.x] = value;
             }
           });
         });
       }
 
-      function updateScore() {
-        document.getElementById('score').innerText = 'Score: ' + player.score;
-      }
-
-      document.addEventListener('keydown', (event) => {
-        if (gamePaused) return;
-
-        if (event.key === 'ArrowLeft') {
-          player.pos.x--;
-          if (collide(arena, player)) player.pos.x++;
-        } else if (event.key === 'ArrowRight') {
-          player.pos.x++;
-          if (collide(arena, player)) player.pos.x--;
-        } else if (event.key === 'ArrowDown') {
-          player.pos.y++;
-          if (collide(arena, player)) player.pos.y--;
-        } else if (event.key === 'z') {
-          player.matrix = rotate(player.matrix);
-          if (collide(arena, player)) player.matrix = rotate(player.matrix, true);
-        } else if (event.key === 'x') {
-          player.matrix = rotate(player.matrix, true);
-          if (collide(arena, player)) player.matrix = rotate(player.matrix, false);
-        } else if (event.key === ' ') {
-          while (!collide(arena, player)) {
-            player.pos.y++;
-          }
-          player.pos.y--;
-          merge(arena, player);
-          playerReset();
-          updateScore();
-        }
-      });
-
-      function rotate(matrix, clockWise = false) {
+      function rotate(matrix) {
         return matrix[0].map((_, index) => matrix.map(row => row[index])).reverse();
       }
 
-      function startTetris() {
-        document.getElementById('about-me').style.display = 'none';
-        document.getElementById('tetris-container').style.display = 'block';
-        playerReset();
-        updateScore();
-        update();
+      function move(dir) {
+        player.pos.x += dir;
+        if (collide(arena, player)) {
+          player.pos.x -= dir;
+        }
       }
 
-      function pauseGame() {
-        gamePaused = true;
-        document.getElementById('resume-game').style.display = 'block';
+      function drop() {
+        player.pos.y++;
+        if (collide(arena, player)) {
+          player.pos.y--;
+          merge(arena, player);
+          playerReset();
+          linesCleared = 0;
+          player.score = 0;
+          updateScore();
+        }
+        dropCounter = 0;
+      }
+
+      function updateScore() {
+        const scoreElement = document.getElementById('score');
+        scoreElement.innerText = `Score: ${player.score}`;
+      }
+
+      function removeFullLines() {
+        outer: for (let y = arena.length - 1; y >= 0; --y) {
+          if (arena[y].every(cell => cell !== 0)) {
+            arena.splice(y, 1);
+            arena.unshift(new Array(arena[0].length).fill(0));
+            linesCleared++;
+            if (linesCleared === 1) {
+              player.score += 10;
+            } else if (linesCleared === 2) {
+              player.score += 50;
+            } else if (linesCleared === 3) {
+              player.score += 150;
+            } else if (linesCleared === 4) {
+              player.score += 500;
+            }
+            linesCleared = 0;
+            updateScore();
+            break;
+          }
+        }
+      }
+
+      function update(time = 0) {
+        const deltaTime = time - lastTime;
+        lastTime = time;
+        dropCounter += deltaTime;
+        if (dropCounter > dropInterval) {
+          drop();
+        }
+        removeFullLines();
+        draw();
+        requestAnimationFrame(update);
+      }
+
+      function draw() {
+        const canvas = document.getElementById('tetris');
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = '#000';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        drawMatrix(arena, { x: 0, y: 0 }, ctx);
+        drawMatrix(player.matrix, player.pos, ctx);
+      }
+
+      function drawMatrix(matrix, offset, ctx) {
+        matrix.forEach((row, y) => {
+          row.forEach((value, x) => {
+            if (value !== 0) {
+              ctx.fillStyle = 'red';
+              ctx.fillRect(x + offset.x, y + offset.y, 1, 1);
+            }
+          });
+        });
+      }
+
+      function startTetris() {
+        document.getElementById('tetris-container').style.display = 'block';
+        document.getElementById('about-me').style.display = 'none';
+        playerReset();
+        update();
       }
 
       function resumeGame() {
@@ -290,6 +291,7 @@
 
       function showBioParagraph() {
         document.getElementById('bio-full').style.display = 'block';
+        document.getElementById('about-me').style.display = 'none';
       }
     </script>
   </body>
