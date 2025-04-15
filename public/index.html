@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Welcome to Firebase Hosting</title>
+    <title>Alexiya's Portfolio</title>
 
     <script defer src="/__/firebase/11.6.0/firebase-app-compat.js"></script>
     <script defer src="/__/firebase/11.6.0/firebase-auth-compat.js"></script>
@@ -164,10 +164,9 @@
         player.matrix = createPiece();
         player.pos.y = 0;
         player.pos.x = Math.floor(arena[0].length / 2) - Math.floor(player.matrix[0].length / 2);
+        // Ensure no collision immediately at start
         if (collide(arena, player)) {
-          arena.forEach(row => row.fill(0));
-          player.score = 0;
-          updateScore();
+          return;
         }
       }
 
@@ -248,7 +247,7 @@
         const deltaTime = time - lastTime;
         lastTime = time;
         dropCounter += deltaTime;
-        if (dropCounter > dropInterval) {
+        if (dropCounter > dropInterval && !gamePaused) {
           drop();
         }
         removeFullLines();
@@ -280,6 +279,7 @@
         document.getElementById('tetris-container').style.display = 'block';
         document.getElementById('about-me').style.display = 'none';
         playerReset();
+        gamePaused = false;
         update();
       }
 
